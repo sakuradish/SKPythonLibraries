@@ -1,11 +1,14 @@
 ################################################################################
+import sys
+sys.path.append("../MySpeaker/")
+from MySpeaker import MySpeaker
+################################################################################
 from datetime import datetime
 import coloredlogs
 import inspect
 import logging
 import os
 import re
-import sys
 import time
 import traceback
 ################################################################################
@@ -26,11 +29,12 @@ class MyLogger:
     }
     ################################################################################
 
-    def __init__(self, name='NO_NAME', level='DEBUG'):
+    def __init__(self, name='NO_NAME', level='DEBUG', speaker=None):
         # メンバ変数初期化
         self.level = self.LEVEL_TABLE[level]['level']
         self.stacks = {}
         self.stack_level = 0
+        self.speaker = speaker
         # ログレベル追加
         logger = logging.getLogger(name)
         logging.SPAM = self.LEVEL_TABLE['SPAM']['value']
@@ -116,6 +120,8 @@ class MyLogger:
         if self.isNeedToLog(level):
             self.origin_log_func_map[level](
                 self.makeMessage(args, filename, frameinfo.lineno))
+        if self.speaker:
+            self.speaker.speak(args)
 ################################################################################
 
     def makeMessage(self, args, filename, lineno):
@@ -218,6 +224,8 @@ class MyLogger:
             self.stacks[i]['elapsedTime'] = elapsedTime
 
         self.stack_level += 1
+        if self.speaker:
+            self.speaker.off()
         self.debug("+++++++++++++++++++++++++++++++++++")
         for i in range(len(self.stacks)):
             stack = self.stacks[i].copy()
@@ -227,6 +235,8 @@ class MyLogger:
             else:
                 self.debug("         ", stack)
         self.debug("+++++++++++++++++++++++++++++++++++")
+        if self.speaker:
+            self.speaker.on()
 ################################################################################
 
     def finish(self):
@@ -234,6 +244,8 @@ class MyLogger:
             start = self.stacks[i]['start']
             elapsedTime = round(time.time() - start, 2)
             self.stacks[i]['elapsedTime'] = elapsedTime
+        if self.speaker:
+            self.speaker.off()
         self.debug("+++++++++++++++++++++++++++++++++++")
         for i in range(len(self.stacks)):
             stack = self.stacks[i].copy()
@@ -245,6 +257,8 @@ class MyLogger:
             else:
                 self.debug("         ", stack)
         self.debug("+++++++++++++++++++++++++++++++++++")
+        if self.speaker:
+            self.speaker.on()
         self.stack_level -= 1
         del self.stacks[self.stack_level]
 ################################################################################
@@ -282,7 +296,8 @@ class MyLogger:
 
 ###############################################################################
 if __name__ == '__main__':
-    logger = MyLogger('TEST1', 'spam')
+    speaker = MySpeaker()
+    logger = MyLogger('TEST1', 'spam', speaker)
 
     @logger.showTrace
     def test1():
