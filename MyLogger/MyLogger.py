@@ -1,16 +1,17 @@
 ################################################################################
+import traceback
+import time
+import re
+import os
+import logging
+import inspect
+import coloredlogs
+from datetime import datetime
 import sys
 sys.path.append("../MySpeaker/")
-from MySpeaker import MySpeaker
 ################################################################################
-from datetime import datetime
-import coloredlogs
-import inspect
-import logging
-import os
-import re
-import time
-import traceback
+if 1:  # format回避のためにネストを下げる
+    from MySpeaker import MySpeaker
 ################################################################################
 
 
@@ -103,6 +104,17 @@ class MyLogger:
         handler.setFormatter(logging.Formatter(
             '[ %(asctime)s ][ %(levelname)8s ][ ' + name + ' ][ %(funcName)6s ][ %(message)s ]', datefmt='%H:%M:%S'))
         logger.addHandler(handler)
+
+################################################################################
+    # @brief インスタンス取得
+    @classmethod
+    def GetInstance(cls, name='NO_NAME', level='DEBUG', speaker=None):
+        # ファイルごとに出力レベルを管理するので、一番低いレベルを設定しておく。
+        if not hasattr(cls, 'instance_map'):
+            cls.instance_map = {}
+        if not name in cls.instance_map:
+            cls.instance_map[name] = cls(name, level, speaker)
+        return cls.instance_map[name]
 ################################################################################
     # オリジナルログ関数を使用したときに、
     # 呼び出し元関数が良い感じにログに表示されるように
@@ -224,8 +236,7 @@ class MyLogger:
             self.stacks[i]['elapsedTime'] = elapsedTime
 
         self.stack_level += 1
-        if self.speaker:
-            self.speaker.off()
+        self.speakOff()
         self.debug("+++++++++++++++++++++++++++++++++++")
         for i in range(len(self.stacks)):
             stack = self.stacks[i].copy()
@@ -235,8 +246,7 @@ class MyLogger:
             else:
                 self.debug("         ", stack)
         self.debug("+++++++++++++++++++++++++++++++++++")
-        if self.speaker:
-            self.speaker.on()
+        self.speakOn()
 ################################################################################
 
     def finish(self):
@@ -244,8 +254,7 @@ class MyLogger:
             start = self.stacks[i]['start']
             elapsedTime = round(time.time() - start, 2)
             self.stacks[i]['elapsedTime'] = elapsedTime
-        if self.speaker:
-            self.speaker.off()
+        self.speakOff()
         self.debug("+++++++++++++++++++++++++++++++++++")
         for i in range(len(self.stacks)):
             stack = self.stacks[i].copy()
@@ -257,10 +266,30 @@ class MyLogger:
             else:
                 self.debug("         ", stack)
         self.debug("+++++++++++++++++++++++++++++++++++")
-        if self.speaker:
-            self.speaker.on()
+        self.speakOn()
         self.stack_level -= 1
         del self.stacks[self.stack_level]
+################################################################################
+
+    def speakOn(self):
+        if self.speaker:
+            self.speaker.on()
+################################################################################
+
+    def speakOff(self):
+        if self.speaker:
+            self.speaker.off()
+################################################################################
+
+    def getElapsedTime(self):
+        if len(self.stacks) < 1:
+            return False
+        # 全てのframeの経過時間を計算
+        for i in range(len(self.stacks)):
+            start = self.stacks[i]['start']
+            elapsedTime = round(time.time() - start, 2)
+            self.stacks[i]['elapsedTime'] = elapsedTime
+        return self.stacks[self.stack_level-1]['elapsedTime']
 ################################################################################
 
     def isTimeout(self, second):
@@ -274,10 +303,14 @@ class MyLogger:
         # timeout判定
         elapsedTime = self.stacks[self.stack_level-1]['elapsedTime']
         if second < elapsedTime:
+            self.speakOff()
             self.warning(elapsedTime, "/", second, "elapsed")
+            self.speakOn()
             return True
         else:
+            self.speakOff()
             self.info(elapsedTime, "/", second, "elapsed")
+            self.speakOn()
             return False
 ###############################################################################
 
