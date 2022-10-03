@@ -11,7 +11,7 @@ class MySpeaker:
         cevio.StartHost(False)
         self.talker = win32com.client.Dispatch("CeVIO.Talk.RemoteService2.Talker2V40")
         self.talker.Cast = "さとうささら"
-        self.status = "On"    
+        self.status = "ON"    
     ###############################################################################
     def setCast(self, cast):
         self.talker.Cast = cast
@@ -23,15 +23,15 @@ class MySpeaker:
         self.talker.Speed = speed
     ###############################################################################
     def speak(self, text):
-        if self.status == "On":
+        if self.status == "ON":
             state = self.talker.Speak(text)
             state.Wait()
     ###############################################################################
     def off(self):
-        self.status = "Off"
+        self.status = "OFF"
     ###############################################################################
     def on(self):
-        self.status = "On"
+        self.status = "ON"
 ###############################################################################
 if __name__ == '__main__':
     speaker = MySpeaker()

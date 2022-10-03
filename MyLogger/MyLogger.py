@@ -36,6 +36,7 @@ class MyLogger:
         self.stacks = {}
         self.stack_level = 0
         self.speaker = speaker
+        self.external_speaker_status = "ON"
         # ログレベル追加
         logger = logging.getLogger(name)
         logging.SPAM = self.LEVEL_TABLE['SPAM']['value']
@@ -202,6 +203,7 @@ class MyLogger:
                 os.chdir(pwd)
                 return ret
             except Exception as e:
+                self.__speakOff()
                 self.critical("+++++++++++++++++++++++++++++++++++")
                 for i in range(len(self.stacks)):
                     stack = self.stacks[i].copy()
@@ -212,6 +214,7 @@ class MyLogger:
                 self.critical(e)
                 self.critical(traceback.format_exc())
                 self.critical("+++++++++++++++++++++++++++++++++++")
+                self.__speakOn()
                 input("press any key to exit ...")
                 sys.exit()
         return decowrapper
@@ -236,7 +239,7 @@ class MyLogger:
             self.stacks[i]['elapsedTime'] = elapsedTime
 
         self.stack_level += 1
-        self.speakOff()
+        self.__speakOff()
         self.debug("+++++++++++++++++++++++++++++++++++")
         for i in range(len(self.stacks)):
             stack = self.stacks[i].copy()
@@ -246,7 +249,7 @@ class MyLogger:
             else:
                 self.debug("         ", stack)
         self.debug("+++++++++++++++++++++++++++++++++++")
-        self.speakOn()
+        self.__speakOn()
 ################################################################################
 
     def finish(self):
@@ -254,7 +257,7 @@ class MyLogger:
             start = self.stacks[i]['start']
             elapsedTime = round(time.time() - start, 2)
             self.stacks[i]['elapsedTime'] = elapsedTime
-        self.speakOff()
+        self.__speakOff()
         self.debug("+++++++++++++++++++++++++++++++++++")
         for i in range(len(self.stacks)):
             stack = self.stacks[i].copy()
@@ -266,17 +269,30 @@ class MyLogger:
             else:
                 self.debug("         ", stack)
         self.debug("+++++++++++++++++++++++++++++++++++")
-        self.speakOn()
+        self.__speakOn()
         self.stack_level -= 1
         del self.stacks[self.stack_level]
 ################################################################################
 
     def speakOn(self):
+        self.external_speaker_status = "ON"
+        self.__speakOn()
+################################################################################
+
+    def speakOff(self):
+        self.external_speaker_status = "OFF"
+        self.__speakOff()
+################################################################################
+
+    def __speakOn(self):
+        # 外部からoffに設定されているときはonにしない
+        if self.external_speaker_status == "OFF":
+            return
         if self.speaker:
             self.speaker.on()
 ################################################################################
 
-    def speakOff(self):
+    def __speakOff(self):
         if self.speaker:
             self.speaker.off()
 ################################################################################
@@ -303,14 +319,14 @@ class MyLogger:
         # timeout判定
         elapsedTime = self.stacks[self.stack_level-1]['elapsedTime']
         if second < elapsedTime:
-            self.speakOff()
+            self.__speakOff()
             self.warning(elapsedTime, "/", second, "elapsed")
-            self.speakOn()
+            self.__speakOn()
             return True
         else:
-            self.speakOff()
+            self.__speakOff()
             self.info(elapsedTime, "/", second, "elapsed")
-            self.speakOn()
+            self.__speakOn()
             return False
 ###############################################################################
 
