@@ -340,8 +340,9 @@ class MyLogger:
             if elapsed >= second:
                 break
             time.sleep(1)
+            self.__speakOff()
             self.debug("time sleeping " + str(elapsed) + " / " + str(second))
-
+            self.__speakOn()
 
 ###############################################################################
 if __name__ == '__main__':
