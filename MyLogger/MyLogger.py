@@ -325,7 +325,7 @@ class MyLogger:
             return True
         else:
             self.__speakOff()
-            self.info(elapsedTime, "/", second, "elapsed")
+            self.debug(elapsedTime, "/", second, "elapsed")
             self.__speakOn()
             return False
 ###############################################################################
@@ -343,6 +343,7 @@ class MyLogger:
             self.__speakOff()
             self.debug("time sleeping " + str(elapsed) + " / " + str(second))
             self.__speakOn()
+
 
 ###############################################################################
 if __name__ == '__main__':
