@@ -215,8 +215,7 @@ class MyLogger:
                 self.critical(traceback.format_exc())
                 self.critical("+++++++++++++++++++++++++++++++++++")
                 self.__speakOn()
-                input("press any key to exit ...")
-                sys.exit()
+                raise e
         return decowrapper
 ################################################################################
 
