@@ -1,13 +1,15 @@
 ################################################################################
-import traceback
-import time
-import re
-import os
-import logging
-import inspect
-import coloredlogs
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
+import coloredlogs
+import glob
+import inspect
+import logging
+import os
+import re
 import sys
+import time
+import traceback
 sys.path.append("../MySpeaker/")
 ################################################################################
 if 1:  # format回避のためにネストを下げる
@@ -30,7 +32,7 @@ class MyLogger:
     }
     ################################################################################
 
-    def __init__(self, name='NO_NAME', level='DEBUG', speaker=None):
+    def __init__(self, name='NO_NAME', level='DEBUG', speaker=None, reset_log=False):
         # メンバ変数初期化
         self.level = self.LEVEL_TABLE[level]['level']
         self.stacks = {}
@@ -98,10 +100,17 @@ class MyLogger:
                             fmt='[ %(asctime)s ][ %(levelname)8s ][ ' + name + ' ][ %(funcName)6s ][ %(message)s ]', datefmt='%H:%M:%S')
         # ログをファイル出力
         basedir = os.path.dirname(os.path.abspath(__file__))+'/log/'
-        if not os.path.exists(basedir):
+        if os.path.exists(basedir):
+            if reset_log:
+                for file in glob.glob(basedir + "/*.log"):
+                    if os.path.isfile(file):
+                        os.remove(file)
+        else:
             os.makedirs(basedir)
         filename = datetime.now().strftime('%Y%m%d_%H%M') + '_' + name + '.log'
-        handler = logging.FileHandler(basedir + filename, 'w', 'utf-8')
+        max_bytes = 100 * 1024 * 1024  # MB
+        backup_count = 9
+        handler = RotatingFileHandler(basedir + filename, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8')
         handler.setFormatter(logging.Formatter(
             '[ %(asctime)s ][ %(levelname)8s ][ ' + name + ' ][ %(funcName)6s ][ %(message)s ]', datefmt='%H:%M:%S'))
         logger.addHandler(handler)
@@ -109,12 +118,12 @@ class MyLogger:
 ################################################################################
     # @brief インスタンス取得
     @classmethod
-    def GetInstance(cls, name='NO_NAME', level='DEBUG', speaker=None):
+    def GetInstance(cls, name='NO_NAME', level='DEBUG', speaker=None, reset_log=False):
         # ファイルごとに出力レベルを管理するので、一番低いレベルを設定しておく。
         if not hasattr(cls, 'instance_map'):
             cls.instance_map = {}
         if not name in cls.instance_map:
-            cls.instance_map[name] = cls(name, level, speaker)
+            cls.instance_map[name] = cls(name, level, speaker=speaker, reset_log=reset_log)
         return cls.instance_map[name]
 ################################################################################
     # オリジナルログ関数を使用したときに、
