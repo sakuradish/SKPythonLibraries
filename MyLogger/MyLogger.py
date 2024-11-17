@@ -326,15 +326,10 @@ class MyLogger:
             self.stacks[i]['elapsedTime'] = elapsedTime
         # timeout判定
         elapsedTime = self.stacks[self.stack_level-1]['elapsedTime']
+        self.debug(elapsedTime, "/", second, "elapsed")
         if second < elapsedTime:
-            self.__speakOff()
-            self.warning(elapsedTime, "/", second, "elapsed")
-            self.__speakOn()
             return True
         else:
-            self.__speakOff()
-            self.debug(elapsedTime, "/", second, "elapsed")
-            self.__speakOn()
             return False
 ###############################################################################
 
