@@ -205,13 +205,10 @@ class MyLogger:
 
     def showTrace(self, func):
         def decowrapper(*args, **kwargs):
+            pwd = os.getcwd()
+            self.start()
             try:
-                pwd = os.getcwd()
-                self.start()
                 ret = func(*args, **kwargs)
-                self.finish()
-                os.chdir(pwd)
-                return ret
             except Exception as e:
                 self.__speakOff()
                 self.critical("+++++++++++++++++++++++++++++++++++")
@@ -225,7 +222,12 @@ class MyLogger:
                 self.critical(traceback.format_exc())
                 self.critical("+++++++++++++++++++++++++++++++++++")
                 self.__speakOn()
+                self.finish()
+                os.chdir(pwd)
                 raise e
+            self.finish()
+            os.chdir(pwd)
+            return ret
         return decowrapper
 ################################################################################
 
