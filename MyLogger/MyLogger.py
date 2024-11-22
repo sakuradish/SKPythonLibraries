@@ -1,6 +1,6 @@
 ################################################################################
 from datetime import datetime
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 import coloredlogs
 import glob
 import inspect
@@ -108,10 +108,8 @@ class MyLogger:
         else:
             os.makedirs(basedir)
         if not no_file:
-            filename = datetime.now().strftime('%Y%m%d_%H%M') + '_' + name + '.log'
-            max_bytes = 100 * 1024 * 1024  # MB
-            backup_count = 9
-            handler = RotatingFileHandler(basedir + filename, maxBytes=max_bytes, backupCount=backup_count, encoding='utf-8')
+            filename = datetime.now().strftime('%Y%m%d') + '_' + name + '.log'
+            handler = TimedRotatingFileHandler(basedir + filename, when='midnight', interval=1, backupCount=7, encoding='utf-8')
             handler.setFormatter(logging.Formatter(
                 '[ %(asctime)s ][ %(levelname)8s ][ ' + name + ' ][ %(funcName)6s ][ %(message)s ]', datefmt='%H:%M:%S'))
             logger.addHandler(handler)
