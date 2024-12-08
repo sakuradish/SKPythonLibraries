@@ -201,6 +201,31 @@ class MyLogger:
         self.printLog("SPAM", *args, **kwargs)
 ################################################################################
 
+    def dontShowTrace(self, func):
+        def decowrapper(*args, **kwargs):
+            pwd = os.getcwd()
+            try:
+                ret = func(*args, **kwargs)
+            except Exception as e:
+                self.__speakOff()
+                self.critical("+++++++++++++++++++++++++++++++++++")
+                for i in range(len(self.stacks)):
+                    stack = self.stacks[i].copy()
+                    del stack['start']
+                    self.critical(stack)
+                self.critical("+++++++++++++++++++++++++++++++++++")
+                self.critical(type(e))
+                self.critical(e)
+                self.critical(traceback.format_exc())
+                self.critical("+++++++++++++++++++++++++++++++++++")
+                self.__speakOn()
+                os.chdir(pwd)
+                raise e
+            os.chdir(pwd)
+            return ret
+        return decowrapper
+################################################################################
+
     def showTrace(self, func):
         def decowrapper(*args, **kwargs):
             pwd = os.getcwd()
